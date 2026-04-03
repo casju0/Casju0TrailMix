@@ -1,5 +1,5 @@
 - Name: Casju0TrailMix
-  Version: 0.1.0
+  Version: 1.0.0
   DLL: bin/Casju0TrailMix.dll
   Dependencies:
     - Name: EverestCore
