@@ -62,30 +62,32 @@ public class Smw1f0 : JumpthruPlatform
             var nextIsRiding = false;
             var jumpThrus = self.Scene.Tracker.GetEntities<Smw1f0>();
             jumpThrus.ForEach(smw1f0 =>
-            {
-                smw1f0.Collidable = true;
-                if (!prevIsRiding && self.IsRiding(smw1f0 as Smw1f0))
                 {
-                    prevIsRiding = true;
+                    smw1f0.Collidable = true;
+                    if (!prevIsRiding && self.IsRiding(smw1f0 as Smw1f0))
+                    {
+                        prevIsRiding = true;
+                    }
                 }
-            });
+            );
             var t = orig(self, moveV, (coll) =>
                 {
                     if (!(coll.Hit is Smw1f0 jumpthru))
                     {
-                        onCollide(coll);
+                        onCollide?.Invoke(coll);
                     }
                 },
                 pusher
             );
             jumpThrus.ForEach(smw1f0 =>
-            {
-                if (!nextIsRiding && self.IsRiding(smw1f0 as Smw1f0))
                 {
-                    nextIsRiding = true;
+                    if (!nextIsRiding && self.IsRiding(smw1f0 as Smw1f0))
+                    {
+                        nextIsRiding = true;
+                    }
+                    smw1f0.Collidable = false;
                 }
-                smw1f0.Collidable = false;
-            });
+            );
             if (!prevIsRiding && nextIsRiding)
             {
                 self.Components.Add(new Smw1f0Slide { Speed = prevSpeed.X });
@@ -93,6 +95,7 @@ public class Smw1f0 : JumpthruPlatform
             return t;
         }
     }
+
     private static bool HandleMoveH(On.Celeste.Actor.orig_MoveHExact orig, Actor self, int moveH, Collision onCollide, Solid pusher)
     {
         var hold = self.Components.Get<Holdable>();
@@ -105,22 +108,26 @@ public class Smw1f0 : JumpthruPlatform
             var isRiding = false;
             var jumpThrus = self.Scene.Tracker.GetEntities<Smw1f0>();
             jumpThrus.ForEach(smw1f0 =>
-            {
-                smw1f0.Collidable = true;
-            });
-            var t = orig(self, moveH, (coll) =>
-            {
-                onCollide(coll);
-                slide.Speed = hold.SpeedGetter().X;
-            }, pusher);
-            jumpThrus.ForEach(smw1f0 =>
-            {
-                if (!isRiding && self.IsRiding(smw1f0 as Smw1f0))
                 {
-                    isRiding = true;
+                    smw1f0.Collidable = true;
                 }
-                smw1f0.Collidable = false;
-            });
+            );
+            var t = orig(self, moveH, (coll) =>
+                {
+                    onCollide?.Invoke(coll);
+                    slide.Speed = hold.SpeedGetter().X;
+                },
+                pusher
+            );
+            jumpThrus.ForEach(smw1f0 =>
+                {
+                    if (!isRiding && self.IsRiding(smw1f0 as Smw1f0))
+                    {
+                        isRiding = true;
+                    }
+                    smw1f0.Collidable = false;
+                }
+            );
             if (!isRiding)
             {
                 self.Components.RemoveAll<Smw1f0Slide>();
