@@ -1,3 +1,5 @@
+using System;
+
 namespace Celeste.Mod.Casju0TrailMix.Entities;
 
 [Tracked]
@@ -13,7 +15,8 @@ public class Smw1f0 : JumpthruPlatform
             var hold = Entity.Components.Get<Holdable>();
             if (hold != null && hold.SpeedSetter != null)
             {
-                hold.SpeedSetter(new Vector2(Speed, Casju0TrailMixModule.Settings.Smw1f0Settings.FallSpeed));
+                var nextSpeed = Math.Abs(hold.SpeedGetter().X) > Math.Abs(Speed) ? hold.SpeedGetter().X : Speed;
+                hold.SpeedSetter(new Vector2(nextSpeed, Casju0TrailMixModule.Settings.Smw1f0Settings.FallSpeed));
             }
         }
     }
