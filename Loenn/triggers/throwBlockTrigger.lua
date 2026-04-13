@@ -4,6 +4,7 @@ throwBlockTrigger.name = "Casju0TrailMix/ThrowBlockTrigger"
 throwBlockTrigger.placements = {
    name = "throw_block_trigger",
    data = {
+      useSmwHoldables = true,
       allowDashPickups = true,
       allowClimbPickups = true,
       allowWallJumpPickups = true,

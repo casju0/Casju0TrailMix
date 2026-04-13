@@ -5,6 +5,7 @@ class ThrowBlockTrigger : Trigger
 {
     static ThrowBlockSubMenu Settings { get => Casju0TrailMixModule.Settings.ThrowBlockSettings; }
 
+    private bool useSmwHoldables;
     private bool allowDashPickups;
     private bool allowClimbPickups;
     private bool allowWallJumpPickups;
@@ -13,6 +14,7 @@ class ThrowBlockTrigger : Trigger
 
     public ThrowBlockTrigger(EntityData data, Vector2 offset) : base(data, offset)
     {
+        useSmwHoldables = data.Bool("useSmwHoldables", true);
         allowDashPickups = data.Bool("allowDashPickups", true);
         allowClimbPickups = data.Bool("allowClimbPickups", true);
         allowWallJumpPickups = data.Bool("allowWallJumpPickups", true);
@@ -31,6 +33,7 @@ class ThrowBlockTrigger : Trigger
 
     public void ApplyChanges()
     {
+        Settings.UseSmwHoldables = useSmwHoldables;
         Settings.AllowDashPickups = allowDashPickups;
         Settings.AllowClimbPickups = allowClimbPickups;
         Settings.AllowWallJumpPickups = allowWallJumpPickups;

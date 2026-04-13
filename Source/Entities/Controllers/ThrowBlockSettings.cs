@@ -8,6 +8,7 @@ public class ThrowBlockSettings : Entity
 
     public ThrowBlockSettings(EntityData data, Vector2 position)
     {
+        Settings.UseSmwHoldables = data.Bool("useSmwHoldables", true);
         Settings.AllowDashPickups = data.Bool("allowDashPickups", true);
         Settings.AllowClimbPickups = data.Bool("allowClimbPickups", true);
         Settings.AllowWallJumpPickups = data.Bool("allowWallJumpPickups", true);

@@ -140,6 +140,7 @@ public class Smw1f0SubMenu
 [SettingSubMenu]
 public class ThrowBlockSubMenu
 {
+    public bool UseSmwHoldables { get; set; } = true;
     public bool AllowDashPickups { get; set; } = true;
     public bool AllowClimbPickups { get; set; } = true;
     public bool AllowWallJumpPickups { get; set; } = true;

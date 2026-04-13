@@ -103,9 +103,7 @@ public class ThrowBlock : Actor
         : base(data.Position + offset)
     {
         Collider = new Hitbox(16f, 16f, -8f, -16f);
-        // TODO: use femtohelper
-        // Add(hold = FemtoHelperImports.CreateSmwHoldable?.Invoke(0, 0, HandleClipDeath, null));
-        Add(hold = new Holdable());
+        Add(hold = Settings.UseSmwHoldables ? FemtoHelperImports.CreateSmwHoldable?.Invoke(0, 0, HandleClipDeath, null) ?? new Holdable() : new Holdable());
         hold.SlowFall = false;
         hold.SlowRun = false;
         hold.OnRelease = HandleRelease;

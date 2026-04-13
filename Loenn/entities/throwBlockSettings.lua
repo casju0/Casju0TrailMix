@@ -5,6 +5,7 @@ throwBlockSettings.depth = 0
 throwBlockSettings.placements = {
    name = "throw_block_settings",
    data = {
+      useSmwHoldables = true,
       allowDashPickups = true,
       allowClimbPickups = true,
       allowWallJumpPickups = true,
