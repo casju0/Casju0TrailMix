@@ -10,7 +10,7 @@ namespace Celeste.Mod.Casju0TrailMix.Entities;
 [CustomEntity("Casju0TrailMix/GrappleHook")]
 public class GrappleHook : Actor
 {
-    public static GrappleSubMenu Settings { get => Casju0TrailMixModule.Settings.GrappleSettings; }
+    public static GrappleSubMenu GrappleSettings { get => Casju0TrailMixModule.Settings.GrappleSettings; }
 
     public static int StGrappleShoot { get; private set; }
     public static int StGrappleToWall { get; private set; }
@@ -57,8 +57,8 @@ public class GrappleHook : Actor
     {
         get
         {
-            return (Settings.InventoryType == GrappleSubMenu.InventoryTypes.AlwaysEquipped) ||
-                   (Settings.InventoryType == GrappleSubMenu.InventoryTypes.RequiresRefill && Grapple.Refilled);
+            return (GrappleSettings.InventoryType == GrappleSubMenu.InventoryTypes.AlwaysEquipped) ||
+                   (GrappleSettings.InventoryType == GrappleSubMenu.InventoryTypes.RequiresRefill && Grapple.Refilled);
         }
     }
 
@@ -66,10 +66,15 @@ public class GrappleHook : Actor
     {
         get
         {
-            switch (Settings.ControlType)
+            switch (GrappleSettings.ControlType)
             {
                 case GrappleSubMenu.ControlTypes.ReplaceGrab:
-                    return Input.Grab.Check;
+                    return Settings.Instance.GrabMode switch
+                    {
+                        GrabModes.Invert => !Input.Grab.Check,
+                        GrabModes.Toggle => Input.grabToggle,
+                        _ => Input.Grab.Check,
+                    };
                 case GrappleSubMenu.ControlTypes.ReplaceDash:
                     return Input.Dash.Check;
                 case GrappleSubMenu.ControlTypes.UserBinding:
@@ -127,7 +132,14 @@ public class GrappleHook : Actor
 
     static bool modGrabCheck(Func<bool> orig)
     {
-        return ShootCheck || orig();
+        if ((Engine.Scene as Level).Session.GetFlag(GrappleController.flag))
+        {
+            return ShootCheck || orig();
+        }
+        else
+        {
+            return orig();
+        }
     }
 
     public override void Update()
@@ -153,9 +165,9 @@ public class GrappleHook : Actor
             self.StateMachine.State != StGrappleShoot &&
             self.StateMachine.State != StGrappleToWall)
         {
-            var difference = (self.Center + Vector2.UnitY * Settings.YOffset) - Grapple.Center;
+            var difference = (self.Center + Vector2.UnitY * GrappleSettings.YOffset) - Grapple.Center;
             var distance = difference.LengthSquared();
-            var movement = difference.SafeNormalize() * Settings.RetractSpeed * Engine.DeltaTime;
+            var movement = difference.SafeNormalize() * GrappleSettings.RetractSpeed * Engine.DeltaTime;
             var movementDistance = movement.LengthSquared();
             Grapple.NaiveMove(movement);
             if (distance <= movementDistance)
@@ -174,7 +186,7 @@ public class GrappleHook : Actor
         // cooldown circle
         if (CooldownTimer > 0f)
         {
-            float x = (Settings.Cooldown - CooldownTimer) / Settings.Cooldown;
+            float x = (GrappleSettings.Cooldown - CooldownTimer) / GrappleSettings.Cooldown;
             float c1 = 1.70158f;
             float c3 = c1 + 1;
             float t = c3 * x * x * x - c1 * x * x;
@@ -196,7 +208,7 @@ public class GrappleHook : Actor
 
             // use a berenstein line algorithm to get the location of each pixel for a straight line
             // then modulate the y values of those pixels with a sine wave
-            var p1 = player.Center + Vector2.UnitY * Settings.YOffset;
+            var p1 = player.Center + Vector2.UnitY * GrappleSettings.YOffset;
             var p2 =
                 Center
                 + Vector2.UnitX * (hitboxWidth / 2) * (float)Facing;
@@ -215,9 +227,9 @@ public class GrappleHook : Actor
                     var oy2 = 1 - (Math.Abs(step / 2 - i) / (step / 2));
                     Draw.Point(
                         new Vector2(p1.X + i * stepX, baseY + oy1 * oy2),
-                        (Celeste.FreezeTimer + ContactPauseTimer) > 0 ? Settings.ContactColor
-                            : IsPlayerGrapplingSomething(player) ? Settings.ReelColor
-                            : Settings.StringColor
+                        (Celeste.FreezeTimer + ContactPauseTimer) > 0 ? GrappleSettings.ContactColor
+                            : IsPlayerGrapplingSomething(player) ? GrappleSettings.ReelColor
+                            : GrappleSettings.StringColor
                         );
                 }
             }
@@ -292,13 +304,13 @@ public class GrappleHook : Actor
                     // otherwise, try shoot out the grapple
                     if (
                         Grapple.CooldownTimer <= 0 &&
-                        (Settings.CanShootWhenTired || !self.IsTired) &&
+                        (GrappleSettings.CanShootWhenTired || !self.IsTired) &&
                         !Grapple.AlreadyShotOnceWithCurrentHeldInput &&
                         !Grapple.IsGrappleHookOutsideGun
                     )
                     {
                         Grapple.AlreadyShotOnceWithCurrentHeldInput = true;
-                        if (Settings.InventoryType == GrappleSubMenu.InventoryTypes.RequiresRefill)
+                        if (GrappleSettings.InventoryType == GrappleSubMenu.InventoryTypes.RequiresRefill)
                         {
                             Grapple.Refilled = false;
                         }
@@ -343,7 +355,7 @@ public class GrappleHook : Actor
     )
     {
         orig(self, data, offset);
-        if (Settings.PufferBehavior == GrappleSubMenu.PufferBehaviors.PullPuffer)
+        if (GrappleSettings.PufferBehavior == GrappleSubMenu.PufferBehaviors.PullPuffer)
         {
             self.Add(
                 new GrappleHoldable
@@ -356,7 +368,7 @@ public class GrappleHook : Actor
             );
             self.Add(new Holdable { cannotHoldTimer = float.PositiveInfinity });
         }
-        else if (Settings.PufferBehavior == GrappleSubMenu.PufferBehaviors.PullPlayer)
+        else if (GrappleSettings.PufferBehavior == GrappleSubMenu.PufferBehaviors.PullPlayer)
         {
             self.Add(new GrappleSolid());
         }
@@ -383,9 +395,9 @@ public class GrappleHook : Actor
         if (hitWall)
         {
             Audio.Play(grappleHitSoundPath);
-            if (Settings.Shockwave != GrappleSubMenu.Shockwaves.None)
+            if (GrappleSettings.Shockwave != GrappleSubMenu.Shockwaves.None)
             {
-                float shockwaveMultiplier = Settings.Shockwave == GrappleSubMenu.Shockwaves.Large ? 2 : 1;
+                float shockwaveMultiplier = GrappleSettings.Shockwave == GrappleSubMenu.Shockwaves.Large ? 2 : 1;
                 Grapple.SceneAs<Level>()
                     .Displacement.AddBurst(
                         Grapple.Center,
@@ -399,7 +411,7 @@ public class GrappleHook : Actor
             }
         }
 
-        switch (Settings.FreezeFrameLength)
+        switch (GrappleSettings.FreezeFrameLength)
         {
             case GrappleSubMenu.FreezeFrameLengths.Short:
                 Celeste.Freeze(0.05f);
@@ -414,7 +426,7 @@ public class GrappleHook : Actor
                 break;
         }
         Grapple.ContactPauseTimer = 0f;
-        switch (Settings.ContactPauseLength)
+        switch (GrappleSettings.ContactPauseLength)
         {
             case GrappleSubMenu.FreezeFrameLengths.Short:
                 Grapple.ContactPauseTimer = 0.05f;
@@ -432,18 +444,18 @@ public class GrappleHook : Actor
 
     private static void GrappleCancel(Player p)
     {
-        switch (Settings.PlayerReleaseMomentum)
+        switch (GrappleSettings.PlayerReleaseMomentum)
         {
             case GrappleSubMenu.PlayerReleaseMomentums.RetainGrappleSpeed:
-                p.Speed.X += Settings.PlayerReleaseSpeedBoost * (int)Grapple.Facing;
+                p.Speed.X += GrappleSettings.PlayerReleaseSpeedBoost * (int)Grapple.Facing;
                 break;
             case GrappleSubMenu.PlayerReleaseMomentums.RevertSpeed:
                 p.Speed = Grapple.PreGrappleSpeed;
                 break;
         }
-        if (Settings.PlayerReleaseMomentumSpeedCap >= 0)
+        if (GrappleSettings.PlayerReleaseMomentumSpeedCap >= 0)
         {
-            p.Speed.X = Math.Clamp(p.Speed.X, -Settings.PlayerReleaseMomentumSpeedCap, Settings.PlayerReleaseMomentumSpeedCap);
+            p.Speed.X = Math.Clamp(p.Speed.X, -GrappleSettings.PlayerReleaseMomentumSpeedCap, GrappleSettings.PlayerReleaseMomentumSpeedCap);
         }
     }
 
@@ -452,7 +464,7 @@ public class GrappleHook : Actor
         var direction = (
             p.Center + p.carryOffset - Grapple.GrappledHoldable.Entity.Center
         ).SafeNormalize();
-        Grapple.GrappledHoldable.SetSpeed(Settings.ItemPullSpeed * direction);
+        Grapple.GrappledHoldable.SetSpeed(GrappleSettings.ItemPullSpeed * direction);
         var grappleComponent =
             Grapple.GrappledHoldable.Entity.Components.Get<GrappleHoldable>();
         grappleComponent?.OnGrappleRelease?.Invoke((int)Grapple.Facing);
@@ -463,11 +475,11 @@ public class GrappleHook : Actor
     #region grapple shoot state
     static int GrappleShootUpdate(Player self)
     {
-        if (Grapple.ShootTimer > Settings.MinShootDuration)
+        if (Grapple.ShootTimer > GrappleSettings.MinShootDuration)
         {
             Grapple.CanInterrupt = true;
         }
-        if (Grapple.ShootTimer > Settings.MaxShootDuration)
+        if (Grapple.ShootTimer > GrappleSettings.MaxShootDuration)
         {
             Grapple.CanAdvance = false;
         }
@@ -475,7 +487,7 @@ public class GrappleHook : Actor
         var shouldRetract = !Grapple.CanAdvance || (!ShootCheck && Grapple.CanInterrupt);
         if (shouldRetract)
         {
-            if (Settings.HarpoonMode)
+            if (GrappleSettings.HarpoonMode)
             {
                 OnContact(false);
                 return StGrappleToWall;
@@ -498,9 +510,9 @@ public class GrappleHook : Actor
         {
             return Player.StNormal;
         }
-        var shootSpeed = Settings.ShootSpeed;
+        var shootSpeed = GrappleSettings.ShootSpeed;
         var preXSpeed = Grapple.PreGrappleSpeed.X * (int)Grapple.Facing;
-        if (Settings.AddMomentumToShot && preXSpeed > Player.DashSpeed)
+        if (GrappleSettings.AddMomentumToShot && preXSpeed > Player.DashSpeed)
         {
             shootSpeed += preXSpeed - Player.DashSpeed;
         }
@@ -543,16 +555,16 @@ public class GrappleHook : Actor
         Grapple.PreGrappleSpeed = self.Speed;
         Grapple.PreJumpTimer = self.varJumpTimer;
         self.Speed = Vector2.Zero;
-        Grapple.Center = self.Center + Vector2.UnitY * Settings.YOffset;
+        Grapple.Center = self.Center + Vector2.UnitY * GrappleSettings.YOffset;
         Grapple.Facing = self.Facing;
         Grapple.CanAdvance = true;
         Grapple.CanInterrupt = false;
-        Grapple.shootSound = Audio.Play(Settings.HarpoonMode ? harpoonSoundPath : shootSoundPath);
+        Grapple.shootSound = Audio.Play(GrappleSettings.HarpoonMode ? harpoonSoundPath : shootSoundPath);
     }
 
     static void GrappleShootEnd(Player self)
     {
-        if (!Settings.HarpoonMode)
+        if (!GrappleSettings.HarpoonMode)
         {
             Audio.Stop(Grapple.shootSound);
         }
@@ -566,23 +578,23 @@ public class GrappleHook : Actor
             Grapple.ContactPauseTimer -= Engine.DeltaTime;
             return StGrappleToWall;
         }
-        var pullSpeed = Settings.WallPullSpeed;
+        var pullSpeed = GrappleSettings.WallPullSpeed;
         var preXSpeed = Grapple.PreGrappleSpeed.X * (int)Grapple.Facing;
-        if (Settings.AddMomentumToShot && preXSpeed > Player.DashSpeed)
+        if (GrappleSettings.AddMomentumToShot && preXSpeed > Player.DashSpeed)
         {
             pullSpeed += preXSpeed - Player.DashSpeed;
         }
         self.Speed.X = pullSpeed * (int)Grapple.Facing;
 
-        if (Settings.CanWallDashCancel && (Input.DashPressed || Input.CrouchDashPressed) && self.Dashes > 0)
+        if (GrappleSettings.CanWallDashCancel && (Input.DashPressed || Input.CrouchDashPressed) && self.Dashes > 0)
         {
             return self.StartDash();
         }
-        else if (Settings.CanWallJumpCancel && Input.Jump.Pressed)
+        else if (GrappleSettings.CanWallJumpCancel && Input.Jump.Pressed)
         {
             if (self.Stamina > 0)
             {
-                self.Stamina -= Settings.JumpCancelStaminaCost;
+                self.Stamina -= GrappleSettings.JumpCancelStaminaCost;
                 self.Jump();
                 self.sweatSprite.Play("jump", restart: true);
                 self.forceMoveXTimer = climbJumpForceXMoveDuration;
@@ -599,7 +611,7 @@ public class GrappleHook : Actor
             GrappleCancel(self);
             return Player.StNormal;
         }
-        else if (Settings.CanWallCancel && !ShootCheck)
+        else if (GrappleSettings.CanWallCancel && !ShootCheck)
         {
             GrappleCancel(self);
             return Player.StNormal;
@@ -636,7 +648,7 @@ public class GrappleHook : Actor
 
     static void GrappleToWallBegin(Player self)
     {
-        if (!Settings.HarpoonMode)
+        if (!GrappleSettings.HarpoonMode)
         {
             Grapple.ShouldPlayRetractSound = true;
         }
@@ -644,7 +656,7 @@ public class GrappleHook : Actor
 
     private static void GrappleToWallEnd(Player self)
     {
-        Grapple.CooldownTimer = Settings.Cooldown;
+        Grapple.CooldownTimer = GrappleSettings.Cooldown;
     }
     #endregion
     #region grapple item state
@@ -657,16 +669,16 @@ public class GrappleHook : Actor
             Grapple.ContactPauseTimer -= Engine.DeltaTime;
             return StGrappleItem;
         }
-        else if (Settings.CanItemJumpCancel && (Input.DashPressed || Input.CrouchDashPressed) && self.Dashes > 0)
+        else if (GrappleSettings.CanItemJumpCancel && (Input.DashPressed || Input.CrouchDashPressed) && self.Dashes > 0)
         {
             ReleaseItem(self);
             return self.StartDash();
         }
-        else if (Settings.CanItemJumpCancel && Input.Jump.Pressed)
+        else if (GrappleSettings.CanItemJumpCancel && Input.Jump.Pressed)
         {
             if (self.Stamina > 0)
             {
-                self.Stamina -= Settings.JumpCancelStaminaCost;
+                self.Stamina -= GrappleSettings.JumpCancelStaminaCost;
                 self.Jump();
                 self.sweatSprite.Play("jump", restart: true);
                 self.forceMoveXTimer = climbJumpForceXMoveDuration;
@@ -683,7 +695,7 @@ public class GrappleHook : Actor
             GrappleCancel(self);
             return Player.StNormal;
         }
-        else if (Settings.CanItemCancel && !ShootCheck)
+        else if (GrappleSettings.CanItemCancel && !ShootCheck)
         {
             self.Speed = Grapple.PreGrappleSpeed;
             self.varJumpTimer = Grapple.PreJumpTimer;
@@ -694,13 +706,13 @@ public class GrappleHook : Actor
         else
         {
             var direction = (
-                (self.Center + Vector2.UnitY * Settings.YOffset) - Grapple.GrappledHoldable.Entity.Center
+                (self.Center + Vector2.UnitY * GrappleSettings.YOffset) - Grapple.GrappledHoldable.Entity.Center
             ).SafeNormalize();
 
             var a = Grapple.GrappledHoldable.EntityAs<Actor>();
-            var pullSpeed = Settings.WallPullSpeed;
+            var pullSpeed = GrappleSettings.WallPullSpeed;
             var preXSpeed = Grapple.PreGrappleSpeed.X * (int)Grapple.Facing;
-            if (Settings.AddMomentumToShot && preXSpeed > Player.DashSpeed)
+            if (GrappleSettings.AddMomentumToShot && preXSpeed > Player.DashSpeed)
             {
                 pullSpeed += preXSpeed - Player.DashSpeed;
             }
@@ -743,7 +755,7 @@ public class GrappleHook : Actor
             Grapple.GrappledHoldable.Entity.Components.Get<GrappleHoldable>();
         grappleComponent?.OnGrapplePickup?.Invoke((int)Grapple.Facing);
         OnContact(true);
-        if (!Settings.HarpoonMode)
+        if (!GrappleSettings.HarpoonMode)
         {
             Grapple.ShouldPlayRetractSound = true;
         }
@@ -751,7 +763,7 @@ public class GrappleHook : Actor
 
     private static void GrappleItemEnd(Player self)
     {
-        Grapple.CooldownTimer = Settings.Cooldown;
+        Grapple.CooldownTimer = GrappleSettings.Cooldown;
     }
     #endregion
     #endregion
