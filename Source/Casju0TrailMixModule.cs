@@ -53,6 +53,10 @@ public class Casju0TrailMixModule : EverestModule
         TechlessController.Load();
         SuperBounceController.Load();
         WaterPhysicsController.Load();
+        SpaceWrappedFallingBlock.Load();
+        FiveEddController.Load();
+        SierpinskiFiveGon.Load();
+        Everest.Events.Level.OnLoadBackdrop += Level_OnLoadBackdrop;
     }
 
     public override void Unload()
@@ -63,9 +67,22 @@ public class Casju0TrailMixModule : EverestModule
         TechlessController.Unload();
         SuperBounceController.Unload();
         WaterPhysicsController.Unload();
+        SpaceWrappedFallingBlock.Unload();
+        FiveEddController.Unload();
+        SierpinskiFiveGon.Unload();
+        Everest.Events.Level.OnLoadBackdrop -= Level_OnLoadBackdrop;
     }
 
-    // Optional, do anything requiring either the Celeste or mod content here. 
+    private Backdrop Level_OnLoadBackdrop(MapData map, BinaryPacker.Element child, BinaryPacker.Element above)
+    {
+        if (child.Name.Equals("Casju0TrailMix/SierpinskiFiveGon", StringComparison.OrdinalIgnoreCase))
+        {
+            return new SierpinskiFiveGon();
+        }
+        return null;
+    }
+
+    // Optional, do anything requiring either the Celeste or mod content here.
     // Usually involves Spritebanks or custom particle effects.
     public override void LoadContent(bool firstLoad)
     {

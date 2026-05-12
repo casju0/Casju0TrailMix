@@ -106,7 +106,7 @@ public class ThrowBlock : Actor
         Add(hold = Settings.UseSmwHoldables ? FemtoHelperImports.CreateSmwHoldable?.Invoke(0, 0, HandleClipDeath, null) ?? new Holdable() : new Holdable());
         hold.SlowFall = false;
         hold.SlowRun = false;
-	hold.OnPickup = HandlePickup;
+        hold.OnPickup = HandlePickup;
         hold.OnRelease = HandleRelease;
         hold.OnHitSpring = HandleHitSpring;
         hold.SpeedGetter = () => speed;
@@ -352,14 +352,14 @@ public class ThrowBlock : Actor
     private void HandlePickup()
     {
         AddTag(Tags.Persistent);
-	AllowPushing = false;
-	state = States.Grabbed;
+        AllowPushing = false;
+        state = States.Grabbed;
     }
 
     private void HandleRelease(Vector2 force)
     {
         RemoveTag(Tags.Persistent);
-	AllowPushing = true;
+        AllowPushing = true;
         Audio.Play("event:/casju0_TrailMix/smw_kick");
         Player player = Scene.Tracker.GetNearestEntity<Player>(Position);
         if (force.X != 0f && force.Y == 0f)
@@ -411,9 +411,9 @@ public class ThrowBlock : Actor
     private void HandleClipDeath(Vector2 vector)
     {
         if (state == States.Dropped || state == States.Thrown)
-	{
+        {
             Break();
-	}
+        }
     }
 
     #region pickup handlers
