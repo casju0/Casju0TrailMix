@@ -49,7 +49,7 @@ public class FiveEddController(EntityData data, Vector2 offset) : Entity(data.Po
 
     public static Vector2 HandleGetAimVector(On.Celeste.Input.orig_GetAimVector orig, Facings defaultFacing)
     {
-        if ((Engine.Scene as Level).Session.GetFlag(flag))
+        if (Engine.Scene is Level level && level.Session.GetFlag(flag))
         {
             var result = orig(defaultFacing);
             var downAngle = (float)Math.Tau * 0.25f;
@@ -113,7 +113,7 @@ public class FiveEddController(EntityData data, Vector2 offset) : Entity(data.Po
 
     private static void HandleDeathEffect5edd(On.Celeste.DeathEffect.orig_Draw orig, Vector2 position, Color color, float ease)
     {
-        if ((Engine.Scene as Level).Session.GetFlag(flag))
+        if (Engine.Scene is Level level && level.Session.GetFlag(flag))
         {
             Color color2 = Math.Floor(ease * 10f) % 2.0 == 0.0 ? color : Color.White;
             MTexture mTexture = GFX.Game["characters/player/hair00"];

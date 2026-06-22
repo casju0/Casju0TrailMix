@@ -132,7 +132,7 @@ public class GrappleHook : Actor
 
     static bool modGrabCheck(Func<bool> orig)
     {
-        if ((Engine.Scene as Level).Session.GetFlag(GrappleController.flag))
+        if (Engine.Scene is Level level && level.Session.GetFlag(GrappleController.flag))
         {
             return ShootCheck || orig();
         }
